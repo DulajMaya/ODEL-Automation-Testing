@@ -151,6 +151,7 @@ public class PDFReportGenerator {
         document.add(new Paragraph("Build Number: " + System.getenv("BUILD_NUMBER"), normalFont));
         document.add(new Paragraph("Job Name: " + System.getenv("JOB_NAME"), normalFont));
         document.add(new Paragraph("Build URL: " + System.getenv("BUILD_URL"), normalFont));
+        document.add(new Paragraph("Repository URL: https://github.com/DulajMaya/ODEL-Automation-Testing.git", normalFont));
         document.add(new Paragraph("Build Time: " + new Date(), normalFont));
         document.add(new Paragraph("\n"));
     }
