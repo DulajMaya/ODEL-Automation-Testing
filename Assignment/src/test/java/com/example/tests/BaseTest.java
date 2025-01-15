@@ -9,11 +9,13 @@ import org.testng.annotations.Parameters;
 
 public class BaseTest {
     protected WebDriver driver;
-    private static final boolean HEADLESS_MODE = false;
+    // Check if running in Jenkins by looking for JENKINS_HOME environment variable
+    private static final boolean HEADLESS_MODE = System.getenv("JENKINS_HOME") != null;
 
     @Parameters("browser")
     @BeforeMethod
     public void setUp(@Optional("chrome") String browser) {
+        System.out.println("Running in " + (HEADLESS_MODE ? "headless" : "normal") + " mode");
         driver = DriverManager.getDriver(browser, HEADLESS_MODE);
     }
 

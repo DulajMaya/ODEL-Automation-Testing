@@ -35,9 +35,23 @@ public class DriverManager {
                 case "edge":
                     EdgeOptions edgeOptions = new EdgeOptions();
                     if (headless) {
-                        edgeOptions.addArguments("--headless");
+                        edgeOptions.addArguments("--headless=new");
+                        edgeOptions.addArguments("--disable-gpu");
+                        edgeOptions.addArguments("--window-size=1920,1080");
+                        edgeOptions.addArguments("--no-sandbox");
+                        edgeOptions.addArguments("--disable-dev-shm-usage");
                     }
-                    driver = new EdgeDriver(edgeOptions);
+                    // Add these arguments regardless of headless mode
+                    edgeOptions.addArguments("--remote-allow-origins=*");
+                    edgeOptions.addArguments("--ignore-certificate-errors");
+
+                    try {
+                        driver = new EdgeDriver(edgeOptions);
+                    } catch (Exception e) {
+                        System.out.println("Error initializing Edge driver: " + e.getMessage());
+                        e.printStackTrace();
+                        throw new RuntimeException("Failed to initialize Edge driver", e);
+                    }
                     break;
 
                 default:
@@ -50,8 +64,13 @@ public class DriverManager {
 
     public static void quitDriver() {
         if (driver != null) {
-            driver.quit();
-            driver = null;
+            try {
+                driver.quit();
+            } catch (Exception e) {
+                System.out.println("Error quitting driver: " + e.getMessage());
+            } finally {
+                driver = null;
+            }
         }
     }
 }
