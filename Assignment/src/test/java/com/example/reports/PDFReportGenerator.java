@@ -8,31 +8,35 @@ import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import java.io.FileOutputStream;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 public class PDFReportGenerator {
 
-    private static final String OUTPUT_PATH = "test-output/TestReport.pdf";
+    private static final String OUTPUT_PATH = "test-output/Combined_Test_Report.pdf";
     private Document document;
 
-    public void generateReport(List<ITestResult> results, Map<String, String> testData) {
+    public void generateReport(List<ITestResult> results) {
         try {
             document = new Document();
             PdfWriter.getInstance(document, new FileOutputStream(OUTPUT_PATH));
             document.open();
 
-            // Add Title
-            addTitle();
+            // Add Title and Jenkins Build Info
+            addJenkinsInfo();
 
             // Add Test Summary
             addTestSummary(results);
 
-            // Add Test Details
+            // Add Detailed Test Results
             addTestDetails(results);
 
-            // Add Screenshots if tests failed
+            // Add Screenshots
             addScreenshots(results);
+
+            // Add ExtentReport Summary
+            addExtentReportSummary();
 
             document.close();
         } catch (Exception e) {
@@ -108,14 +112,54 @@ public class PDFReportGenerator {
         for (ITestResult result : results) {
             if (result.getStatus() == ITestResult.FAILURE) {
                 try {
-                    Image img = Image.getInstance("test-output/screenshots/" + result.getName() + ".png");
-                    img.scaleToFit(500, 500);
+                    // Change the path to match where TestListener saves screenshots
+                    String screenshotPath = System.getProperty("user.dir")
+                            + "/test-output/screenshots/"
+                            + result.getName() + ".png";
+
+                    Image img = Image.getInstance(screenshotPath);
+                    img.scaleToFit(400, 300);  // Adjust size if needed
+                    img.setAlignment(Element.ALIGN_CENTER);
+
+                    // Add test name before screenshot
+                    Paragraph testName = new Paragraph("Screenshot for: " + result.getName());
+                    testName.setAlignment(Element.ALIGN_CENTER);
+                    document.add(testName);
+                    document.add(new Paragraph("\n"));
                     document.add(img);
+                    document.add(new Paragraph("\n"));
                 } catch (Exception e) {
-                    document.add(new Paragraph("Screenshot not available for: " + result.getName()));
+                    document.add(new Paragraph("Error adding screenshot for: " + result.getName()));
+                    e.printStackTrace();
                 }
             }
         }
+    }
+
+    private void addJenkinsInfo() throws DocumentException {
+        Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
+        Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
+
+        // Title
+        Paragraph title = new Paragraph("Test Automation Report", titleFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        document.add(title);
+        document.add(new Paragraph("\n"));
+
+        // Jenkins Build Info
+        document.add(new Paragraph("Jenkins Build Information:", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
+        document.add(new Paragraph("Build Number: " + System.getenv("BUILD_NUMBER"), normalFont));
+        document.add(new Paragraph("Job Name: " + System.getenv("JOB_NAME"), normalFont));
+        document.add(new Paragraph("Build URL: " + System.getenv("BUILD_URL"), normalFont));
+        document.add(new Paragraph("Build Time: " + new Date(), normalFont));
+        document.add(new Paragraph("\n"));
+    }
+
+    private void addExtentReportSummary() throws DocumentException {
+        document.add(new Paragraph("ExtentReport Summary:", FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14)));
+        document.add(new Paragraph("Full HTML Report available at: test-output/OdelTestReport.html"));
+        document.add(new Paragraph("\n"));
+        // Add any specific metrics from ExtentReports if needed
     }
 
 }
